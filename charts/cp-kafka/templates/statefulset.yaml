@@ -128,6 +128,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        - name: CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS
+          value: 'PLAINTEXT://test-kafka-cp-kafka:9092'      
         - name: KAFKA_HEAP_OPTS
           value: {{ .Values.heapOptions }}
         {{- if (get .Values "cp-zookeeper").enabled }}
@@ -139,8 +141,6 @@ spec:
         {{- end }}
         - name: KAFKA_LOG_DIRS
           value: {{ include "cp-kafka.log.dirs" . | quote }}
-        - name: CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS
-          value: {{ printf "PLAINTEXT://%s:9092" (include "cp-kafka.cp-kafka-headless.fullname" .) | quote }}
         {{- range $key, $value := .Values.configurationOverrides }}
         - name: {{ printf "KAFKA_%s" $key | replace "." "_" | upper | quote }}
           value: {{ $value | quote }}
