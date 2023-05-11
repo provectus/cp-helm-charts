@@ -153,9 +153,14 @@ spec:
         - -exc
         - |
           export KAFKA_BROKER_ID=${HOSTNAME##*-} && \
-          export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://${POD_NAME}.{{ template "cp-kafka.fullname" . }}-headless.${POD_NAMESPACE}:9092{{ include "cp-kafka.configuration.advertised.listeners" . }} && \
+          export KAFKA_ADVERTISED_LISTENERS=SASL_PLAINTEXT://${POD_NAME}.{{ template "cp-kafka.fullname" . }}-headless.${POD_NAMESPACE}:9092,PLAINTEXT://${POD_NAME}.{{ template "cp-kafka.fullname" . }}-headless.${POD_NAMESPACE}:29092{{ include "cp-kafka.configuration.advertised.listeners" . }} && \
           exec /etc/confluent/docker/run
         volumeMounts:
+        {{- if .Values.yamlApplicationConfigConfigMap}}
+          - name: kafka-cp-server-conf-configmap
+            mountPath: /etc/kafka/jaas/kafka_server.conf
+            subPath: kafka_server.conf
+        {{- end }}
         {{- if .Values.persistence.enabled }}
           {{- $disksPerBroker := .Values.persistence.disksPerBroker | int }}
           {{- range $k, $e := until $disksPerBroker }}
@@ -172,6 +177,11 @@ spec:
 {{ toYaml .Values.imagePullSecrets | indent 8 }}
       {{- end }}
       volumes:
+      {{- if .Values.yamlApplicationConfigConfigMap}}
+      - name: kafka-cp-server-conf-configmap
+        configMap: 
+          name: {{ .Values.yamlApplicationConfigConfigMap.name }}
+      {{- end }}
       {{- if not .Values.persistence.enabled }}
       - name: datadir-0
         emptyDir: {}
