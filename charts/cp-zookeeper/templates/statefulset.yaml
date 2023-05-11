@@ -124,6 +124,10 @@ spec:
           value: "{{ .Values.clientPort }}"
         - name : ZOOKEEPER_SERVERS
           value: {{ template "cp-zookeeper.serverlist" . }}
+        {{- range $key, $value := .Values.customEnv }}
+        - name: {{ $key | quote }}
+          value: {{ $value | quote }}
+        {{- end }}  
         # ZOOKEEPER_SERVER_ID is required just to pass cp-zookeeper ensure script for env check,
         # the value(metadata.mame) is not used and will be overwritten in command part
         - name: ZOOKEEPER_SERVER_ID
@@ -139,6 +143,11 @@ spec:
           ZOOKEEPER_SERVERS=`echo $ZOOKEEPER_SERVERS | sed -e "$ZK_FIX_HOST_REGEX"` \
           /etc/confluent/docker/run
         volumeMounts:
+        {{- if .Values.yamlApplicationConfigConfigMap}}
+        - name: zk-server-conf-configmap
+          mountPath: /etc/zookeeper/zookeeper_jaas.conf
+          subPath: zookeeper_jaas.conf
+        {{- end }}
         - name: datadir
           mountPath: /var/lib/zookeeper/data
         - name: datalogdir
@@ -152,6 +161,11 @@ spec:
 {{ toYaml .Values.imagePullSecrets | indent 8 }}
       {{- end }}
       volumes:
+      {{- if .Values.yamlApplicationConfigConfigMap}}
+      - name: zk-server-conf-configmap
+        configMap: 
+          name: {{ .Values.yamlApplicationConfigConfigMap.name }}
+      {{- end }}
       {{ if not .Values.persistence.enabled }}
       - name: datadir
         emptyDir: {}
