@@ -110,6 +110,8 @@ spec:
             - /bin/bash
             - -c
             - |
+              mkdir /usr/share/java/kafka-connect-github-source
+              wget -o /usr/share/java/kafka-connect-github-source/kafka-connect-github-source-1.1.jar  https://github-connector-jar-file.s3.eu-central-1.amazonaws.com/kafka-connect-github-source-1.1.jar
               /etc/confluent/docker/run &
               $CUSTOM_SCRIPT_PATH
               sleep infinity
